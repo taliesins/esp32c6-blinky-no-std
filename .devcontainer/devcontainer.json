@@ -1,0 +1,63 @@
+{
+  "name": "blinky_no_std",
+  // Select between image and build properties to pull or build the image.
+  // "image": "docker.io/espressif/idf-rust:esp32c3_latest",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "CONTAINER_USER": "esp",
+      "CONTAINER_GROUP": "esp",
+      "ESP_BOARD": "esp32c3"
+    },
+    "options": [
+      "--platform=linux/amd64"
+    ]
+  },
+  "initializeCommand": "bash .devcontainer/initialize-command.sh -w '${localWorkspaceFolder}'",
+  "postCreateCommand": "bash .devcontainer/post-create.sh -w '${localWorkspaceFolder}'",
+  "mounts": [
+    "source=//var/run/docker.sock,target=//var/run/docker.sock,type=bind,consistency=delegated",
+    "source=${localWorkspaceFolder}/.profile/.vscode-server/extensions,target=/home/esp/.vscode-server/extensions,type=bind",
+    "source=${localWorkspaceFolder}/.profile/.vscode-server-insiders/extensions,target=/home/esp/.vscode-server-insiders/extensions,type=bind",
+    "source=${localWorkspaceFolder}/.profile/vscode/history/,target=/home/esp/history/,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_rsa,target=/home/esp/.ssh/id_rsa,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/config,target=/home/esp/.ssh/config,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/known_hosts,target=/home/esp/.ssh/known_hosts,type=bind",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/home/esp/.gitconfig,type=bind"
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file",
+        "editor.formatOnType": true,
+        "lldb.executable": "/usr/bin/lldb",
+        "files.watcherExclude": {
+          "**/target/**": true
+        },
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.checkOnSave.allTargets": false,
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        }
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "serayuzgur.crates",
+        "mutantdino.resourcemonitor",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode.cpptools",
+        "actboy168.tasks",
+        "Wokwi.wokwi-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [
+    8000,
+    3333
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/blinky_no_std,type=bind,consistency=cached",
+  "workspaceFolder": "/home/esp/blinky_no_std"
+}
