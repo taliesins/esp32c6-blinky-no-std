@@ -1,47 +1,29 @@
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 use esp_backtrace as _;
-use esp_hal::{clock::ClockControl, delay::Delay, peripherals::Peripherals, prelude::*};
+use esp_hal::prelude::*;
+use esp_println::{logger::init_logger_from_env, println};
 
-extern crate alloc;
-use core::mem::MaybeUninit;
-
-#[global_allocator]
-static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
-
-fn init_heap() {
-    const HEAP_SIZE: usize = 32 * 1024;
-    static mut HEAP: MaybeUninit<[u8; HEAP_SIZE]> = MaybeUninit::uninit();
-
-    unsafe {
-        ALLOCATOR.init(HEAP.as_mut_ptr() as *mut u8, HEAP_SIZE);
-    }
+#[embassy_executor::task]
+async fn task() {
+    log::info!("Task");
+    println!("Taks")
 }
 
-#[entry]
+#[esp_hal::entry]
 fn main() -> ! {
-    let peripherals = Peripherals::take();
+    init_logger_from_env();
+
+    let peripherals = esp_hal::peripherals::Peripherals::take();
     let system = peripherals.SYSTEM.split();
+    let clocks = esp_hal::clock::ClockControl::boot_defaults(system.clock_control).freeze();
+    let delay = esp_hal::delay::Delay::new(&clocks);
 
-    let clocks = ClockControl::max(system.clock_control).freeze();
-    let delay = Delay::new(&clocks);
-    init_heap();
-
-    esp_println::logger::init_logger_from_env();
-
-    let timer = esp_hal::systimer::SystemTimer::new(peripherals.SYSTIMER).alarm0;
-    let _init = esp_wifi::initialize(
-        esp_wifi::EspWifiInitFor::Wifi,
-        timer,
-        esp_hal::rng::Rng::new(peripherals.RNG),
-        system.radio_clock_control,
-        &clocks,
-    )
-    .unwrap();
-
+    log::info!("Start");
     loop {
-        log::info!("Hello world!");
-        delay.delay(500.millis());
+        log::info!("Running");
+        delay.delay_millis(1000);
     }
 }

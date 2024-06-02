@@ -1,4 +1,3 @@
-# Base image
 ARG VARIANT=bookworm-slim
 FROM debian:${VARIANT}
 ENV DEBIAN_FRONTEND=noninteractive
@@ -58,20 +57,25 @@ RUN ARCH=$($HOME/.cargo/bin/rustup show | grep "Default host" | sed -e 's/.* //'
 RUN mkdir -p /home/${CONTAINER_USER}/.local/share/bash-completion/completions \
   && espup completions bash > /home/${CONTAINER_USER}/.local/share/bash-completion/completions/espup
 
-ARG GITHUB_TOKEN
-RUN if [ -n "${GITHUB_TOKEN}" ]; then export GITHUB_TOKEN=${GITHUB_TOKEN}; fi
-
-ARG ESP_BOARD=all
 # Install Xtensa Rust
-RUN ${HOME}/.cargo/bin/espup install\
-    --targets "${ESP_BOARD}" \
-    --log-level debug \
-    --export-file /home/${CONTAINER_USER}/export-esp.sh
-
-# Set default toolchain
-RUN rustup default nightly
+ARG ESP_BOARD=all
+ARG XTENSA_VERSION=1.77.0.0
+RUN version="" && if [ "${XTENSA_VERSION}" != "latest" ];then version="--toolchain-version ${XTENSA_VERSION}"; fi && \
+  ${HOME}/.cargo/bin/espup install \
+  --targets "${ESP_BOARD}" \
+  --log-level debug \
+  --export-file /home/${CONTAINER_USER}/export-esp.sh \
+  $version
 
 # Activate ESP environment
 RUN echo "source /home/${CONTAINER_USER}/export-esp.sh" >> ~/.bashrc
+
+# Set default toolchain
+RUN if [ "${ESP_BOARD}" = "all" ] || echo "$ESP_BOARD" | grep -q "esp32c" || echo "$ESP_BOARD" | grep -q "esp32h"; then \   
+    rustup default nightly;  \
+    rustup component add rustfmt ; \
+  else \     
+    rustup default esp; \
+  fi
 
 CMD [ "/bin/bash" ]

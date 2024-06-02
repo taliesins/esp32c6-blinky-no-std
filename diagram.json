@@ -1,34 +1,234 @@
 {
     "version": 1,
-    "editor": "wokwi",
     "author": "Taliesin Sisson <taliesins@yahoo.com>",
+    "editor": "wokwi",
     "parts": [
-        {
-            "type": "board-esp32-c3-devkitm-1",
-            "id": "esp",
-            "top": 0.59,
-            "left": 0.67,
-            "attrs": {
-                "flashSize": "16"
-            }
+      {
+        "type": "board-esp32-c3-devkitm-1",
+        "id": "esp",
+        "top": -0.3,
+        "left": -3.78,
+        "attrs": {
+          "flashSize": "16",
+          "builder": "rust-std-esp"
         }
+      },
+      {
+        "type": "wokwi-led-bar-graph",
+        "id": "bargraph1",
+        "top": 43.2,
+        "left": 206.4,
+        "attrs": {
+          "color": "lime"
+        }
+      },
+      {
+        "type": "wokwi-pushbutton",
+        "id": "btn1",
+        "top": 35,
+        "left": -182.4,
+        "attrs": {
+          "color": "green"
+        }
+      }
     ],
     "connections": [
+      [
+        "esp:TX",
+        "$serialMonitor:RX",
+        "",
+        []
+      ],
+      [
+        "esp:RX",
+        "$serialMonitor:TX",
+        "",
+        []
+      ],
+      [
+        "bargraph1:A10",
+        "esp:1",
+        "green",
         [
-            "esp:TX",
-            "$serialMonitor:RX",
-            "",
-            []
-        ],
-        [
-            "esp:RX",
-            "$serialMonitor:TX",
-            "",
-            []
+          "h-19.2",
+          "v57.59"
         ]
+      ],
+      [
+        "bargraph1:A9",
+        "esp:10",
+        "green",
+        [
+          "v19.19",
+          "h192"
+        ]
+      ],
+      [
+        "bargraph1:A8",
+        "esp:19",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A7",
+        "esp:18",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A6",
+        "esp:4",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A5",
+        "esp:5",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A4",
+        "esp:6",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A3",
+        "esp:7",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A2",
+        "esp:8",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:A1",
+        "esp:9",
+        "green",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C1",
+        "bargraph1:C2",
+        "#8f4814",
+        [
+          "v0"
+        ]
+      ],
+      [
+        "bargraph1:C3",
+        "bargraph1:C2",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C3",
+        "bargraph1:C4",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C4",
+        "bargraph1:C5",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C6",
+        "bargraph1:C5",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C6",
+        "bargraph1:C7",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C8",
+        "bargraph1:C7",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C9",
+        "bargraph1:C8",
+        "#8f4814",
+        [
+          "h0.22",
+          "v9.59"
+        ]
+      ],
+      [
+        "bargraph1:C9",
+        "bargraph1:C10",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ],
+      [
+        "bargraph1:C10",
+        "esp:GND.6",
+        "#8f4814",
+        [
+          "h0.22",
+          "v153.59"
+        ]
+      ],
+      [
+        "btn1:1.r",
+        "esp:3",
+        "green",
+        [
+          "v0"
+        ]
+      ],
+      [
+        "btn1:2.r",
+        "esp:GND.2",
+        "#8f4814",
+        [
+          "h0"
+        ]
+      ]
     ],
     "serialMonitor": {
-        "display": "terminal",
-        "convertEol": true
-    }
-}
+      "display": "terminal",
+      "convertEol": true
+    },
+    "dependencies": {}
+  }
