@@ -32,51 +32,73 @@ if [ -n "$full_wslpath" ]; then
   user_profile_path=$(wslpath -u "${user_profile_path}") || :
 fi
 
-mkdir -p "${local_workspace_path}/.profile/.vscode-server/extensions"
-mkdir -p "${local_workspace_path}/.profile/.vscode-server-insiders/extensions"
-mkdir -p "${local_workspace_path}/.profile/vscode/history"
-mkdir -p "${local_workspace_path}/.profile/root/history"
+# Make local cache directories for container to mount to
+directories=(.profile/.vscode-server/extensions .profile/.vscode-server-insiders/extensions .profile/vscode/history .profile/root/history)
+for dir in "${directories[@]}"; do
+  mkdir -p "${local_workspace_path}/${dir}"
+done
 
-if [ ! -f ~/.ssh/id_rsa ]; then
-  if [ -z "$user_profile_path" ]; then
-    touch ~/.ssh/id_rsa
-  else
-    if [ ! -f "${user_profile_path}/.ssh/id_rsa" ]; then
-      touch "${user_profile_path}/.ssh/id_rsa"
+# Ensure that docker has not created folder when mounting a file that does not exist
+files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig)
+for file in "${files[@]}"; do
+  if [ -d ~/"$file" ]; then
+    rmdir -rf ~/"$file" # this is often caused by docker trying to mount a file that does not exist so it creates a folder
+  fi
+done
+
+# Ensure directories exist and if running on a host then make directories on host and link to them
+directories=(.kube)
+for dir in "${directories[@]}"; do
+  if [ ! -d ~/"$dir" ]; then # if we don't have a local directory
+    if [ -z "$user_profile_path" ]; then
+      mkdir -p ~/"$dir" # there is no host, so just add directory on host
+    else
+      if [ ! -d "${user_profile_path}/$dir/" ]; then
+        mkdir -p "${user_profile_path}/$dir/" # create directory on host
+      fi
+      ln -s "${user_profile_path}/$dir/" ~/"$dir" # link to directory on host
     fi
-    ln -s "${user_profile_path}/.ssh/id_rsa" ~/.ssh/id_rsa
+  fi
+done
+
+# Setup .ssh directories
+if [ ! -d ~/.ssh ]; then                                                        # if we don't have a local .ssh directory
+  if [ -z "$user_profile_path" ] && [ ! -d "${user_profile_path}/.ssh/" ]; then # and we don't have a WLS profile path or there is no .ssh on that path
+    mkdir -p ~/.ssh                                                             # then just create the .ssh directory locally
+    chmod 700 ~/.ssh
+  else                                           # we have WSL profile path, but does the .ssh directory exist in the expected windows path?
+    if [ -d "${user_profile_path}/.ssh/" ]; then # it does, so lets copy the .ssh from windows
+      cp -r "${user_profile_path}/.ssh/" ~/.ssh
+      chmod 700 ~/.ssh   # if we have linked from windows, then we need the correct permisions on the directory
+      chmod 600 ~/.ssh/* # if we have linked from windows, then we need the correct permisions on the files
+    fi
   fi
 fi
 
-if [ ! -f ~/.ssh/config ]; then
-  if [ -z "$user_profile_path" ]; then
-    touch ~/.ssh/config
-  else
-    if [ ! -f "${user_profile_path}/.ssh/config" ]; then
-      touch "${user_profile_path}/.ssh/config"
+# If running on a host and files don't exist then link them to the host - for when file settings are the same as host
+if [ -z "$user_profile_path" ]; then
+  files=()
+  for file in "${files[@]}"; do
+    if [ ! -f ~/"$file" ] && [ -f "${user_profile_path}/$file" ]; then
+      ln -s "${user_profile_path}/$file" ~/"$file"
     fi
-    ln -s "${user_profile_path}/.ssh/config" ~/.ssh/config
-  fi
+  done
 fi
 
-if [ ! -f ~/.ssh/known_hosts ]; then
-  if [ -z "$user_profile_path" ]; then
-    touch ~/.ssh/known_hosts
-  else
-    if [ ! -f "${user_profile_path}/.ssh/known_hosts" ]; then
-      touch "${user_profile_path}/.ssh/known_hosts"
+# If running on a host and files don't exist then copy them over from host - for when file settings are different from the host
+if [ -z "$user_profile_path" ]; then
+  files=(.gitconfig)
+  for file in "${files[@]}"; do
+    if [ ! -f ~/"$file" ] && [ -f "${user_profile_path}/$file" ]; then
+      cp -r "${user_profile_path}/$file" ~/"$file"
     fi
-    ln -s "${user_profile_path}/.ssh/known_hosts" ~/.ssh/known_hosts
-  fi
+  done
 fi
 
-if [ ! -f ~/.gitconfig ]; then
-  if [ -z "$user_profile_path" ]; then
-    touch ~/.gitconfig
-  else
-    if [ ! -f "${user_profile_path}/.gitconfig" ]; then
-      touch "${user_profile_path}/.gitconfig"
-    fi
-    ln -s "${user_profile_path}/.gitconfig" ~/.gitconfig
+# Show warning for files that are expected to exist
+files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig)
+for file in "${files[@]}"; do
+  if [ ! -f ~/"$file" ]; then
+    echo "Warning expected file to exist: ~/$file"
   fi
-fi
+done

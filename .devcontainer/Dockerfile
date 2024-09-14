@@ -1,3 +1,5 @@
+# Base image
+ARG BASE_IMAGE=debian
 ARG VARIANT=bookworm-slim
 FROM debian:${VARIANT}
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,16 +9,19 @@ ENV LANG=C.UTF-8
 # Arguments
 ARG CONTAINER_USER=esp
 ARG CONTAINER_GROUP=esp
+ARG ESP_BOARD=all
+#ARG GITHUB_TOKEN
+ARG XTENSA_VERSION=latest
+#ARG XTENSA_VERSION=1.77.0.0
 
 # Install dependencies
-RUN apt-get update \
-    && apt-get install -y sudo git curl llvm-dev libclang-dev clang unzip \
-    libusb-1.0-0 libssl-dev libudev-dev pkg-config \
+RUN apt-get -o Acquire::Check-Valid-Until=false  -o Acquire::Check-Date=false update \
+    && apt-get install -y git curl gcc clang ninja-build unzip libudev-dev tar xz-utils \
+    libusb-1.0-0 libssl-dev pkg-config python3 python3-pip python3-venv libpython3-all-dev python3-virtualenv\
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 # Set users
-RUN adduser --disabled-password --gecos "" ${CONTAINER_USER} && \
-  usermod -aG sudo ${CONTAINER_USER}
+RUN adduser --disabled-password --gecos "" ${CONTAINER_USER}
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN mkdir -p /home/${CONTAINER_USER}/.vscode-server /home/${CONTAINER_USER}/.vscode-server-insiders /home/${CONTAINER_USER}/.vscode-server/extensions /home/${CONTAINER_USER}/.vscode-server-insiders/extensions /home/${CONTAINER_USER}/history /home/${CONTAINER_USER}/.ssh/ \
     && chown -R ${CONTAINER_USER} /home/${CONTAINER_USER}/.vscode-server /home/${CONTAINER_USER}/.vscode-server-insiders /home/${CONTAINER_USER}/.vscode-server/extensions /home/${CONTAINER_USER}/.vscode-server-insiders/extensions /home/${CONTAINER_USER}/history /home/${CONTAINER_USER}/.ssh/ \
@@ -26,7 +31,6 @@ RUN mkdir -p /home/${CONTAINER_USER}/.vscode-server /home/${CONTAINER_USER}/.vsc
     && echo $SNIPPET >> "/home/${CONTAINER_USER}/.bashrc" \
     && chmod -R 600 /home/${CONTAINER_USER}/.ssh/ \
     && chmod 700 /home/${CONTAINER_USER}/.ssh
-
 USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
 
@@ -41,6 +45,10 @@ ENV PATH=${PATH}:/home/${CONTAINER_USER}/.cargo/bin
 RUN ARCH=$($HOME/.cargo/bin/rustup show | grep "Default host" | sed -e 's/.* //') && \
     curl -L "https://github.com/esp-rs/espup/releases/latest/download/espup-${ARCH}" -o "${HOME}/.cargo/bin/espup" && \
     chmod u+x "${HOME}/.cargo/bin/espup" && \
+    curl -L "https://github.com/esp-rs/embuild/releases/latest/download/ldproxy-${ARCH}.zip" -o "${HOME}/.cargo/bin/ldproxy.zip" && \
+    unzip "${HOME}/.cargo/bin/ldproxy.zip" -d "${HOME}/.cargo/bin/" && \
+    rm "${HOME}/.cargo/bin/ldproxy.zip" && \
+    chmod u+x "${HOME}/.cargo/bin/ldproxy" && \
     curl -L "https://github.com/esp-rs/espflash/releases/latest/download/cargo-espflash-${ARCH}.zip" -o "${HOME}/.cargo/bin/cargo-espflash.zip" && \
     unzip "${HOME}/.cargo/bin/cargo-espflash.zip" -d "${HOME}/.cargo/bin/" && \
     rm "${HOME}/.cargo/bin/cargo-espflash.zip" && \
@@ -57,25 +65,25 @@ RUN ARCH=$($HOME/.cargo/bin/rustup show | grep "Default host" | sed -e 's/.* //'
 RUN mkdir -p /home/${CONTAINER_USER}/.local/share/bash-completion/completions \
   && espup completions bash > /home/${CONTAINER_USER}/.local/share/bash-completion/completions/espup
 
-# Install Xtensa Rust
-ARG ESP_BOARD=all
-ARG XTENSA_VERSION=1.77.0.0
-RUN version="" && if [ "${XTENSA_VERSION}" != "latest" ];then version="--toolchain-version ${XTENSA_VERSION}"; fi && \
-  ${HOME}/.cargo/bin/espup install \
-  --targets "${ESP_BOARD}" \
-  --log-level debug \
-  --export-file /home/${CONTAINER_USER}/export-esp.sh \
-  $version
+# Install Rust toolchain for our ESP_BOARD
+# RUN if [ -n "${GITHUB_TOKEN}" ]; then export GITHUB_TOKEN=${GITHUB_TOKEN}; fi && \
+RUN version="" && \
+    if [ "${XTENSA_VERSION}" != "latest" ];then version="--toolchain-version ${XTENSA_VERSION}"; fi && \
+    ${HOME}/.cargo/bin/espup install\
+    --targets "${ESP_BOARD}" \
+    --log-level debug \
+    --export-file /home/${CONTAINER_USER}/export-esp.sh \
+    $version
 
 # Activate ESP environment
 RUN echo "source /home/${CONTAINER_USER}/export-esp.sh" >> ~/.bashrc
 
 # Set default toolchain
-RUN if [ "${ESP_BOARD}" = "all" ] || echo "$ESP_BOARD" | grep -q "esp32c" || echo "$ESP_BOARD" | grep -q "esp32h"; then \   
-    rustup default nightly;  \
+RUN if [ "${ESP_BOARD}" = "all" ] || echo "$ESP_BOARD" | grep -q "esp32c" || echo "$ESP_BOARD" | grep -q "esp32h"; then \
+    rustup default nightly; \
     rustup component add rustfmt ; \
-  else \     
+    else \
     rustup default esp; \
-  fi
+    fi
 
 CMD [ "/bin/bash" ]

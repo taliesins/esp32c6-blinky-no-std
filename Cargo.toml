@@ -6,25 +6,32 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-esp-backtrace = { version = "0.11.1", features = [
-    "esp32c3",
+esp-backtrace = { version = "0.14.1", features = [
+    "esp32c6",
     "exception-handler",
     "panic-handler",
     "println",
 ] }
-esp-hal = { version = "0.17.0", features = [
-    "esp32c3",
+esp-hal = { version = "0.20.1", features = [
+    "esp32c6",
     "async",
-    "embassy",
-    "embassy-time-timg0",
+    "embedded-hal-async",
+    "embedded-io-async",
+    "embassy-futures",
+    "embassy-sync",
 ] }
-esp-println = { version = "0.9.1", features = ["esp32c3", "log"] }
-log = { version = "0.4.21" }
-esp-alloc = { version = "0.3.0" }
-embedded-svc = { version = "0.27.1", default-features = false, features = [] }
+# esp32c6 does not pull in portable-atomic and its a single core so we can use unsafe-assume-single-core instead of critical-section
+portable-atomic = { version = "1.7.0", features = [
+    "unsafe-assume-single-core",
+] }
+
+esp-println = { version = "0.11.0", features = ["esp32c6", "log"] }
+log = { version = "0.4.22" }
+esp-alloc = { version = "0.4.0" }
+embedded-svc = { version = "0.28.0", default-features = false, features = [] }
 embedded-io = "0.6.1"
-esp-wifi = { version = "0.5.1", features = [
-    "esp32c3",
+esp-wifi = { version = "0.9.1", features = [
+    "esp32c6",
     "phy-enable-usb",
     "utils",
     "wifi",
@@ -42,14 +49,19 @@ smoltcp = { version = "0.11.0", default-features = false, features = [
     "socket-udp",
 ] }
 
-embassy-executor = { version = "0.5.0", features = [
-    "nightly",
+embassy-executor = { version = "0.6.0", features = [
+    #"nightly",
     "integrated-timers",
     "arch-riscv32",
-    "executor-thread",
 ] }
 
 riscv-rt = { version = "0.12.2", optional = true }
+esp-hal-embassy = { version = "0.3.0", features = [
+    "esp32c6",
+    "log",
+    "integrated-timers",
+] }
+
 
 [features]
 default = ["rt"]

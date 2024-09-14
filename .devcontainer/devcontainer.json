@@ -5,9 +5,9 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      "CONTAINER_USER": "esp",
-      "CONTAINER_GROUP": "esp",
-      "ESP_BOARD": "esp32c3"
+      //"CONTAINER_USER": "esp",
+      //"CONTAINER_GROUP": "esp",
+      //"ESP_BOARD": "esp32c6",
     },
     "options": [
       "--platform=linux/amd64"
