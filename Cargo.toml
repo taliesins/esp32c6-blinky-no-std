@@ -61,6 +61,9 @@ esp-hal-embassy = { version = "0.3.0", features = [
     "log",
     "integrated-timers",
 ] }
+embassy-time = "0.3.2"
+embassy-time-driver = { version = "0.1.0", optional = true }
+embassy-futures = { version = "0.1.1", features = ["log"] }
 
 
 [features]
