@@ -1,0 +1,26 @@
+# partition_table = "partitions.csv"
+# partition_table_offset
+# target_app_partition
+# bootloader
+# flash_settings
+
+baudrate = 921600
+
+# [connection]
+# serial = "/dev/ttyACM1"
+
+[[usb_device]]
+# Use "lsusb list" to see details. Pick serial port over jtag port 
+# vid = "1a86"
+# pid = "55d3"
+
+vid = "303a"
+pid = "1001"
+
+[flash]
+# https://docs.espressif.com/projects/esptool/en/latest/esp32/advanced-topics/spi-flash-modes.html
+mode = "qio"
+
+# https://www.waveshare.com/wiki/ESP32-C6-DEV-KIT-N8
+size = "8MB"
+frequency = "80MHz"

@@ -21,33 +21,39 @@ esp-hal = { version = "0.20.1", features = [
     "embassy-sync",
 ] }
 # esp32c6 does not pull in portable-atomic and its a single core so we can use unsafe-assume-single-core instead of critical-section
-portable-atomic = { version = "1.7.0", features = [
-    "unsafe-assume-single-core",
-] }
+# portable-atomic = { version = "1.7.0", features = [
+#     "unsafe-assume-single-core",
+# ] }
 
-esp-println = { version = "0.11.0", features = ["esp32c6", "log"] }
+esp-println = { version = "0.11.0", features = [
+    "esp32c6",
+    "log",
+    #"jtag-serial",
+    #"critical-section",
+    #"colors",
+] }
 log = { version = "0.4.22" }
 esp-alloc = { version = "0.4.0" }
 embedded-svc = { version = "0.28.0", default-features = false, features = [] }
 embedded-io = "0.6.1"
-esp-wifi = { version = "0.9.1", features = [
-    "esp32c6",
-    "phy-enable-usb",
-    "utils",
-    "wifi",
-] }
+# esp-wifi = { version = "0.9.1", features = [
+#     "esp32c6",
+#     "phy-enable-usb",
+#     "utils",
+#     "wifi",
+# ] }
 heapless = { version = "0.8.0", default-features = false }
-smoltcp = { version = "0.11.0", default-features = false, features = [
-    "medium-ethernet",
-    "proto-dhcpv4",
-    "proto-igmp",
-    "proto-ipv4",
-    "socket-dhcpv4",
-    "socket-icmp",
-    "socket-raw",
-    "socket-tcp",
-    "socket-udp",
-] }
+# smoltcp = { version = "0.11.0", default-features = false, features = [
+#     "medium-ethernet",
+#     "proto-dhcpv4",
+#     "proto-igmp",
+#     "proto-ipv4",
+#     "socket-dhcpv4",
+#     "socket-icmp",
+#     "socket-raw",
+#     "socket-tcp",
+#     "socket-udp",
+# ] }
 
 embassy-executor = { version = "0.6.0", features = [
     #"nightly",

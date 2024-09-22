@@ -5,7 +5,7 @@
       "name": "Wokwi GDB",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/target/riscv32imc-unknown-none-elf/debug/blinky_no_std",
+      "program": "${workspaceFolder}/target/riscv32imac-unknown-none-elf/debug/blinky_no_std",
       "cwd": "${workspaceFolder}",
       "MIMode": "gdb",
       "miDebuggerPath": "${userHome}/.espressif/tools/riscv32-esp-elf/esp-2021r2-patch3-8.4.0/riscv32-esp-elf/bin/riscv32-esp-elf-gdb",

@@ -31,7 +31,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@v1
         with:
-          target: riscv32imc-unknown-none-elf
+          target: riscv32imac-unknown-none-elf
           toolchain: nightly
           components: rust-src, rustfmt, clippy
       - name: Enable caching

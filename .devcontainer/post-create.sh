@@ -10,5 +10,5 @@ done
 
 echo "local_workspace_path=${local_workspace_path}"
 
-cp -r .devcontainer/certs/ /usr/local/share/ca-certificates/
-update-ca-certificates
+#cp -r .devcontainer/certs/ /usr/local/share/ca-certificates/
+#update-ca-certificates

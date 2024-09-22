@@ -1,7 +1,7 @@
 {
   "name": "blinky_no_std",
   // Select between image and build properties to pull or build the image.
-  // "image": "docker.io/espressif/idf-rust:esp32c3_latest",
+  // "image": "docker.io/espressif/idf-rust:esp32c6_latest",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -13,9 +13,15 @@
       "--platform=linux/amd64"
     ]
   },
+  "runArgs": [
+    "--privileged",
+    "--device=/dev/ttyACM0:/dev/ttyACM0", //USB-Enhanced-SERIAL CH343 (COM3)
+    "--device=/dev/ttyACM1:/dev/ttyACM1" //USB Serial Device (COM4), USB JTAG/serial debug unit
+  ],
   "initializeCommand": "bash .devcontainer/initialize-command.sh -w '${localWorkspaceFolder}'",
   "postCreateCommand": "bash .devcontainer/post-create.sh -w '${localWorkspaceFolder}'",
   "mounts": [
+    // "source=/dev/bus/usb,target=/dev/bus/usb,type=bind,consistency=cached",
     "source=//var/run/docker.sock,target=//var/run/docker.sock,type=bind,consistency=delegated",
     "source=${localWorkspaceFolder}/.profile/.vscode-server/extensions,target=/home/esp/.vscode-server/extensions,type=bind",
     "source=${localWorkspaceFolder}/.profile/.vscode-server-insiders/extensions,target=/home/esp/.vscode-server-insiders/extensions,type=bind",
@@ -50,7 +56,8 @@
         "yzhang.markdown-all-in-one",
         "ms-vscode.cpptools",
         "actboy168.tasks",
-        "Wokwi.wokwi-vscode"
+        "Wokwi.wokwi-vscode",
+        "thecreativedodo.usbip-connect"
       ]
     }
   },

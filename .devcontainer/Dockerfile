@@ -20,9 +20,17 @@ RUN apt-get -o Acquire::Check-Valid-Until=false  -o Acquire::Check-Date=false up
     libusb-1.0-0 libssl-dev pkg-config python3 python3-pip python3-venv libpython3-all-dev python3-virtualenv\
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
+# Install lsusb so we can access host com ports
+RUN apt-get -o Acquire::Check-Valid-Until=false  -o Acquire::Check-Date=false update \
+    && apt-get install -y sudo usbip hwdata usbutils \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
+
 # Set users
-RUN adduser --disabled-password --gecos "" ${CONTAINER_USER}
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN adduser --disabled-password --gecos "" ${CONTAINER_USER} && \
+    usermod -a -G plugdev ${CONTAINER_USER} && \
+    usermod -a -G dialout ${CONTAINER_USER} && \
+    usermod -a -G tty ${CONTAINER_USER}
+RUN echo "${CONTAINER_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN mkdir -p /home/${CONTAINER_USER}/.vscode-server /home/${CONTAINER_USER}/.vscode-server-insiders /home/${CONTAINER_USER}/.vscode-server/extensions /home/${CONTAINER_USER}/.vscode-server-insiders/extensions /home/${CONTAINER_USER}/history /home/${CONTAINER_USER}/.ssh/ \
     && chown -R ${CONTAINER_USER} /home/${CONTAINER_USER}/.vscode-server /home/${CONTAINER_USER}/.vscode-server-insiders /home/${CONTAINER_USER}/.vscode-server/extensions /home/${CONTAINER_USER}/.vscode-server-insiders/extensions /home/${CONTAINER_USER}/history /home/${CONTAINER_USER}/.ssh/ \
     && SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/home/${CONTAINER_USER}/history/.bash_history" \
@@ -63,7 +71,7 @@ RUN ARCH=$($HOME/.cargo/bin/rustup show | grep "Default host" | sed -e 's/.* //'
     chmod u+x "${HOME}/.cargo/bin/web-flash"
 
 RUN mkdir -p /home/${CONTAINER_USER}/.local/share/bash-completion/completions \
-  && espup completions bash > /home/${CONTAINER_USER}/.local/share/bash-completion/completions/espup
+    && espup completions bash > /home/${CONTAINER_USER}/.local/share/bash-completion/completions/espup
 
 # Install Rust toolchain for our ESP_BOARD
 # RUN if [ -n "${GITHUB_TOKEN}" ]; then export GITHUB_TOKEN=${GITHUB_TOKEN}; fi && \

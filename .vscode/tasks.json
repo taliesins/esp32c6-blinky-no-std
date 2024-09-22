@@ -14,9 +14,21 @@
       }
     },
     {
-      "label": "Build & Flash",
+      "label": "Build & Flash with CLI",
       "type": "shell",
-      "command": "scripts/flash.sh ${input:buildMode}",
+      "command": "scripts/flash-cli.sh ${input:buildMode}",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build & Flash with Web",
+      "type": "shell",
+      "command": "scripts/flash-web.sh ${input:buildMode}",
       "options": {
         "cwd": "${workspaceFolder}"
       },
