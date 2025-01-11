@@ -18,4 +18,4 @@ case "$1" in
     ;;
 esac
 
-cargo espflash flash --chip esp32c6 --list-all-ports --monitor --before default-reset --after hard-reset  #--bin target/riscv32imac-unknown-none-elf/${BUILD_MODE}/blinky_no_std 
+cargo espflash flash --chip esp32c6 --flash-mode qio --list-all-ports --monitor --before default-reset --after hard-reset  #--bin target/riscv32imac-unknown-none-elf/${BUILD_MODE}/blinky_no_std 

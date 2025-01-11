@@ -6,34 +6,38 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+
+esp-hal = { version = "0.22.0", features = [
+    "esp32c6",
+    #"async",
+    #"embedded-hal-async",
+    #"embedded-io-async",
+    #"embassy-futures",
+    #"embassy-sync",
+] }
+# esp32c6 does not pull in portable-atomic and its a single core so we can use unsafe-assume-single-core instead of critical-section
+# portable-atomic = { version = "1.7.0", features = [
+#     "unsafe-assume-single-core",
+# ] }
 esp-backtrace = { version = "0.14.1", features = [
     "esp32c6",
     "exception-handler",
     "panic-handler",
     "println",
 ] }
-esp-hal = { version = "0.20.1", features = [
-    "esp32c6",
-    "async",
-    "embedded-hal-async",
-    "embedded-io-async",
-    "embassy-futures",
-    "embassy-sync",
-] }
-# esp32c6 does not pull in portable-atomic and its a single core so we can use unsafe-assume-single-core instead of critical-section
-# portable-atomic = { version = "1.7.0", features = [
-#     "unsafe-assume-single-core",
-# ] }
 
 esp-println = { version = "0.11.0", features = [
     "esp32c6",
     "log",
+    # See https://github.com/esp-rs/esp-template/issues/125#issuecomment-1805242140
     #"jtag-serial",
-    #"critical-section",
-    #"colors",
+    #"auto",
+    # Re-enable default features _except_ 'uart'
+    "critical-section",
+    "colors",
 ] }
 log = { version = "0.4.22" }
-esp-alloc = { version = "0.4.0" }
+esp-alloc = { version = "0.5.0" }
 embedded-svc = { version = "0.28.0", default-features = false, features = [] }
 embedded-io = "0.6.1"
 # esp-wifi = { version = "0.9.1", features = [
@@ -55,22 +59,24 @@ heapless = { version = "0.8.0", default-features = false }
 #     "socket-udp",
 # ] }
 
-embassy-executor = { version = "0.6.0", features = [
+embassy-executor = { version = "0.6.3", features = [
     #"nightly",
-    "integrated-timers",
+    #"integrated-timers",
     "arch-riscv32",
 ] }
 
-riscv-rt = { version = "0.12.2", optional = true }
-esp-hal-embassy = { version = "0.3.0", features = [
+riscv-rt = { version = "0.13.0", optional = true }
+esp-hal-embassy = { version = "0.5.0", features = [
     "esp32c6",
     "log",
+
     "integrated-timers",
 ] }
-embassy-time = "0.3.2"
-embassy-time-driver = { version = "0.1.0", optional = true }
+embassy-time = { version = "0.3.2" }
+embassy-time-driver = { version = "0.1.0" }
 embassy-futures = { version = "0.1.1", features = ["log"] }
-
+# embassy-sync = { version = "0.6.1" }
+static_cell = { version = "2.1.0" }
 
 [features]
 default = ["rt"]

@@ -86,14 +86,14 @@ if [ -z "$user_profile_path" ]; then
 fi
 
 # If running on a host and files don't exist then copy them over from host - for when file settings are different from the host
-if [ -z "$user_profile_path" ]; then
-  files=(.gitconfig)
-  for file in "${files[@]}"; do
-    if [ ! -f ~/"$file" ] && [ -f "${user_profile_path}/$file" ]; then
-      cp -r "${user_profile_path}/$file" ~/"$file"
-    fi
-  done
-fi
+# if [ -z "$user_profile_path" ]; then
+#   files=(.gitconfig)
+#   for file in "${files[@]}"; do
+#     if [ ! -f ~/"$file" ] && [ -f "${user_profile_path}/$file" ]; then
+#       cp -r "${user_profile_path}/$file" ~/"$file"
+#     fi
+#   done
+# fi
 
 # Show warning for files that are expected to exist
 files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig)

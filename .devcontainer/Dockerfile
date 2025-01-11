@@ -11,13 +11,14 @@ ARG CONTAINER_USER=esp
 ARG CONTAINER_GROUP=esp
 ARG ESP_BOARD=all
 #ARG GITHUB_TOKEN
-ARG XTENSA_VERSION=latest
-#ARG XTENSA_VERSION=1.77.0.0
+#ARG XTENSA_VERSION=latest
+ARG XTENSA_VERSION=1.84.0.0
 
 # Install dependencies
 RUN apt-get -o Acquire::Check-Valid-Until=false  -o Acquire::Check-Date=false update \
-    && apt-get install -y git curl gcc clang ninja-build unzip libudev-dev tar xz-utils \
-    libusb-1.0-0 libssl-dev pkg-config python3 python3-pip python3-venv libpython3-all-dev python3-virtualenv\
+    && apt-get install -y git curl llvm-dev libclang-dev clang unzip \
+    libusb-1.0-0 libssl-dev libudev-dev pkg-config \
+    tar xz-utils python3 python3-pip python3-venv libpython3-all-dev python3-virtualenv\
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 # Install lsusb so we can access host com ports

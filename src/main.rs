@@ -4,38 +4,81 @@
 
 use esp_backtrace as _;
 use esp_hal::{
-    gpio::{Io, Level, Output},
+    gpio::{Level, Output},
+    interrupt::{software::SoftwareInterruptControl, Priority},
     prelude::*,
-    timer::timg::TimerGroup,
+    timer::{timg::TimerGroup, AnyTimer},
 };
+use esp_hal_embassy::InterruptExecutor;
 use esp_println::println;
+use static_cell::StaticCell;
 
+/// Periodically print something.
 #[embassy_executor::task]
-async fn test_task() {
-    log::info!("Test Task Starting");
+async fn high_prio(mut led: Output<'static>) {
+    println!("Starting high_prio()");
     loop {
-        log::info!("Test Task Running");
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(2_000)).await;
+        println!("High priority ticks");
+        led.toggle();
+        embassy_time::Timer::after(embassy_time::Duration::from_millis(500)).await;
+        led.toggle();
+        embassy_time::Timer::after(embassy_time::Duration::from_millis(1_000)).await;
+    }
+}
+
+/// Simulates some blocking (badly behaving) task.
+#[embassy_executor::task]
+async fn low_prio_blocking() {
+    println!("Starting low-priority task that isn't actually async");
+    loop {
+        println!("Doing some long and complicated calculation");
+        let start = embassy_time::Instant::now();
+        while start.elapsed() < embassy_time::Duration::from_secs(5) {}
+        println!("Calculation finished");
+        embassy_time::Timer::after(embassy_time::Duration::from_secs(5)).await;
+    }
+}
+
+/// A well-behaved, but starved async task.
+#[embassy_executor::task]
+async fn low_prio_async() {
+    println!("Starting low-priority task that will not be able to run while the blocking task is running");
+    let mut ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(1));
+    loop {
+        println!("Low priority ticks");
+        ticker.next().await;
     }
 }
 
 #[main]
-async fn main(spawner: embassy_executor::Spawner) {
+async fn main(low_priority_spawner: embassy_executor::Spawner) {
     esp_println::logger::init_logger_from_env();
 
     //Fix log output in vscode
     println!("\x1b[20h");
 
-    let peripherals = esp_hal::peripherals::Peripherals::take();
-    //let peripherals = esp_hal::init(esp_hal::Config::default()); //doesn't work ;<
+    log::info!("Main - Loading");
 
-    // Setup Time Driver for running async sleeps
-    let system = esp_hal::system::SystemControl::new(peripherals.SYSTEM);
-    let clocks = esp_hal::clock::ClockControl::max(system.clock_control).freeze();
+    let peripherals = esp_hal::init(esp_hal::Config::default()); //doesn't work ;<
 
-    // Configure and Initialize Embassy Timer Driver
-    let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks);
-    esp_hal_embassy::init(&clocks, timg0.timer0);
+    let sw_ints = SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+
+    let timg0 = esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0);
+    let timer0: AnyTimer = timg0.timer0.into();
+    let timg1 = TimerGroup::new(peripherals.TIMG1);
+    let timer1: AnyTimer = timg1.timer0.into();
+
+    esp_hal_embassy::init([timer0, timer1]);
+
+    //static LED_CTRL: StaticCell<Signal<CriticalSectionRawMutex, bool>> = StaticCell::new();
+    //let led_ctrl_signal = &*LED_CTRL.init(Signal::new());
+
+    let led = Output::new(peripherals.GPIO0, Level::High);
+
+    // // Setup Time Driver for running async sleeps
+    // let system = esp_hal::system::SystemControl::new(peripherals.SYSTEM);
+    // let clocks = esp_hal::clock::ClockControl::max(system.clock_control).freeze();
+    // let timer0 = timg0.timer0;
 
     // Configure and Initialize LEDC Timer Driver
     // let mut ledc = Ledc::new(peripherals.LEDC, &clocks);
@@ -49,24 +92,19 @@ async fn main(spawner: embassy_executor::Spawner) {
     //     })
     //     .unwrap();
 
-    // Set GPIO0 as an output, and set its state high initially.
-    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
-    let mut led = Output::new(io.pins.gpio11, Level::High);
+    static EXECUTOR: StaticCell<InterruptExecutor<2>> = StaticCell::new();
+    let interrupt_executor = InterruptExecutor::new(sw_ints.software_interrupt2);
+    let executor = EXECUTOR.init(interrupt_executor);
 
-    log::info!("Main Starting");
+    let high_priority_spawner = executor.start(Priority::Priority3);
 
-    spawner.spawn(test_task()).ok();
+    log::info!("Main - Starting");
 
-    //Allow tasks to start before main loop is started
-    embassy_futures::yield_now().await;
+    high_priority_spawner.must_spawn(high_prio(led));
 
-    loop {
-        log::info!("Main Running");
-        led.toggle();
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(500)).await;
-        led.toggle();
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(1_000)).await;
-    }
+    println!("Spawning low-priority tasks");
+    low_priority_spawner.must_spawn(low_prio_async());
+    low_priority_spawner.must_spawn(low_prio_blocking());
 
     //log::info!("Finished");
 }
