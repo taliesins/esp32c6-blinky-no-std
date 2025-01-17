@@ -14,9 +14,9 @@
     ]
   },
   "runArgs": [
-    "--privileged",
-    "--device=/dev/ttyACM0:/dev/ttyACM0", //USB-Enhanced-SERIAL CH343 (COM3)
-    "--device=/dev/ttyACM1:/dev/ttyACM1" //USB Serial Device (COM4), USB JTAG/serial debug unit
+    "--privileged"
+    // "--device=/dev/ttyACM0:/dev/ttyACM0", //USB-Enhanced-SERIAL CH343 (COM3)
+    // "--device=/dev/ttyACM1:/dev/ttyACM1" //USB Serial Device (COM4), USB JTAG/serial debug unit
   ],
   "initializeCommand": "bash .devcontainer/initialize-command.sh -w '${localWorkspaceFolder}'",
   "postCreateCommand": "bash .devcontainer/post-create.sh -w '${localWorkspaceFolder}'",
@@ -28,8 +28,8 @@
     "source=${localWorkspaceFolder}/.profile/vscode/history/,target=/home/esp/history/,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/id_rsa,target=/home/esp/.ssh/id_rsa,type=bind",
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/config,target=/home/esp/.ssh/config,type=bind",
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/known_hosts,target=/home/esp/.ssh/known_hosts,type=bind",
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/home/esp/.gitconfig,type=bind"
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/known_hosts,target=/home/esp/.ssh/known_hosts,type=bind"
+    //"source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/home/esp/.gitconfig,type=bind"
   ],
   "customizations": {
     "vscode": {
@@ -56,8 +56,8 @@
         "yzhang.markdown-all-in-one",
         "ms-vscode.cpptools",
         "actboy168.tasks",
-        "Wokwi.wokwi-vscode",
-        "thecreativedodo.usbip-connect"
+        "Wokwi.wokwi-vscode"
+        //"thecreativedodo.usbip-connect"
       ]
     }
   },

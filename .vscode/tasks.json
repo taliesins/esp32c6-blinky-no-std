@@ -37,6 +37,18 @@
         "isDefault": true
       }
     },
+    {
+      "label": "Console",
+      "type": "shell",
+      "command": "scripts/console.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
   ],
   "inputs": [
     {

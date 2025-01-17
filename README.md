@@ -19,6 +19,23 @@ PowerShell
 wsl --shutdown
 ```
 
+## Setup permission on WSL
+```
+wsl
+sudo su
+
+sudo getent group dialout
+sudo usermod -a -G dialout $USER
+sudo getent group dialout
+
+sudo tee /etc/udev/rules.d/50-myusb.rules > /dev/null <<EOF
+KERNEL=="ttyUSB[0-9]*",MODE="0666"
+KERNEL=="ttyACM[0-9]*",MODE="0666"
+EOF
+
+exit
+wsl --shutdown
+```
 ## Install usbip-win onto Windows host
 To download windows cli: https://github.com/dorssel/usbipd-win/releases
 
@@ -47,7 +64,7 @@ GUID                                  DEVICE
 
 To attach to serial port of microcontroller:
 ```
-usbipd bind --busid 4-2 
+usbipd bind --busid 4-2 --force 
 usbipd attach --wsl --busid=4-2 
 ```
 
@@ -61,7 +78,7 @@ usbipd: info: Using IP address 10.152.0.1 to reach the host.
 
 To attach to jtag port of microcontroller:
 ```
-usbipd bind --busid 4-4
+usbipd bind --busid 4-4 --force
 usbipd attach --wsl --busid=4-4
 ```
 
@@ -104,4 +121,26 @@ Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
 Bus 001 Device 003: ID 303a:1001 Espressif USB JTAG/serial debug unit
 Bus 001 Device 002: ID 1a86:55d3 QinHeng Electronics USB Single Serial
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+```
+
+## Detach serial and jtag ports of microcontroller to WSL
+
+To attach to serial port of microcontroller:
+```
+usbipd detach --busid=4-2 
+usbipd unbind --busid 4-2 
+
+```
+
+To attach to jtag port of microcontroller:
+```
+usbipd detach --busid=4-4
+usbipd unbind --busid 4-4
+
+```
+
+## Create partition bin file from partition csv
+
+```
+cargo espflash partition-table --to-binary --output partitions/partitions.bin partitions.csv
 ```

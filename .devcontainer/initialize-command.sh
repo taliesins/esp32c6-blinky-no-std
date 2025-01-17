@@ -28,7 +28,8 @@ if [ -n "$full_wslpath" ]; then
     fi
   fi
 
-  user_profile_path=$(cmd.exe /c "<nul set /p=%UserProfile%" 2> /dev/null) || :
+  cmd_path=$(wslpath -au 'C:\Windows\System32\cmd.exe')
+  user_profile_path=$($cmd_path /c "<nul set /p=%UserProfile%" 2> /dev/null) || :
   user_profile_path=$(wslpath -u "${user_profile_path}") || :
 fi
 
@@ -39,7 +40,7 @@ for dir in "${directories[@]}"; do
 done
 
 # Ensure that docker has not created folder when mounting a file that does not exist
-files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig)
+files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig .ansible.cfg)
 for file in "${files[@]}"; do
   if [ -d ~/"$file" ]; then
     rmdir -rf ~/"$file" # this is often caused by docker trying to mount a file that does not exist so it creates a folder
@@ -47,7 +48,7 @@ for file in "${files[@]}"; do
 done
 
 # Ensure directories exist and if running on a host then make directories on host and link to them
-directories=(.kube)
+directories=(.aws .azure .kube .packer.d .terraform .terraform.d .ansible)
 for dir in "${directories[@]}"; do
   if [ ! -d ~/"$dir" ]; then # if we don't have a local directory
     if [ -z "$user_profile_path" ]; then
@@ -76,27 +77,33 @@ if [ ! -d ~/.ssh ]; then                                                        
 fi
 
 # If running on a host and files don't exist then link them to the host - for when file settings are the same as host
+files=(.ansible.cfg)
+for file in "${files[@]}"; do
+  if [ ! -f ~/"$file" ]; then
+    echo "no file"
+    if [ -n "$user_profile_path" ]; then
+      touch ~/"$file"
+    elif [ ! -f "${user_profile_path}/$file" ]; then
+      echo "no remote file file"
+      touch "${user_profile_path}/$file"
+      echo "link file to remote file"
+      ln -s "${user_profile_path}/$file" ~/"$file"
+    fi
+  fi
+done
+
+# If running on a host and files don't exist then copy them over from host - for when file settings are different from the host
 if [ -z "$user_profile_path" ]; then
-  files=()
+  files=(.gitconfig)
   for file in "${files[@]}"; do
     if [ ! -f ~/"$file" ] && [ -f "${user_profile_path}/$file" ]; then
-      ln -s "${user_profile_path}/$file" ~/"$file"
+      cp -r "${user_profile_path}/$file" ~/"$file"
     fi
   done
 fi
 
-# If running on a host and files don't exist then copy them over from host - for when file settings are different from the host
-# if [ -z "$user_profile_path" ]; then
-#   files=(.gitconfig)
-#   for file in "${files[@]}"; do
-#     if [ ! -f ~/"$file" ] && [ -f "${user_profile_path}/$file" ]; then
-#       cp -r "${user_profile_path}/$file" ~/"$file"
-#     fi
-#   done
-# fi
-
 # Show warning for files that are expected to exist
-files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig)
+files=(.ssh/id_rsa .ssh/config .ssh/known_hosts .gitconfig .ansible.cfg)
 for file in "${files[@]}"; do
   if [ ! -f ~/"$file" ]; then
     echo "Warning expected file to exist: ~/$file"

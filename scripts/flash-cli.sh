@@ -6,10 +6,12 @@ BUILD_MODE=""
 case "$1" in
 "" | "release")
     #bash scripts/build.sh
+    #cargo espflash partition-table --to-binary --output partitions/partitions.bin partitions.csv 
     BUILD_MODE="release"
     ;;
 "debug")
     #bash scripts/build.sh debug
+    #cargo espflash partition-table --to-binary --output partitions/partitions.bin partitions.csv 
     BUILD_MODE="debug"
     ;;
 *)cd 
@@ -18,4 +20,5 @@ case "$1" in
     ;;
 esac
 
-cargo espflash flash --chip esp32c6 --flash-mode qio --list-all-ports --monitor --before default-reset --after hard-reset  #--bin target/riscv32imac-unknown-none-elf/${BUILD_MODE}/blinky_no_std 
+cargo espflash flash --monitor --before default-reset --after hard-reset --bootloader partitions/bootloader.bin --bin blinky_no_std # --partition-table partitions.csv # --partition-table-offset 0x10000 --target-app-partition ota_0 
+

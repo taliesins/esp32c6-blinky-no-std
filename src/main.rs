@@ -70,10 +70,7 @@ async fn main(low_priority_spawner: embassy_executor::Spawner) {
 
     esp_hal_embassy::init([timer0, timer1]);
 
-    //static LED_CTRL: StaticCell<Signal<CriticalSectionRawMutex, bool>> = StaticCell::new();
-    //let led_ctrl_signal = &*LED_CTRL.init(Signal::new());
-
-    let led = Output::new(peripherals.GPIO0, Level::High);
+    let led = Output::new(peripherals.GPIO11, Level::High);
 
     // // Setup Time Driver for running async sleeps
     // let system = esp_hal::system::SystemControl::new(peripherals.SYSTEM);
