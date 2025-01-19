@@ -14,9 +14,9 @@
     ]
   },
   "runArgs": [
-    "--privileged"
-    // "--device=/dev/ttyACM0:/dev/ttyACM0", //USB-Enhanced-SERIAL CH343 (COM3)
-    // "--device=/dev/ttyACM1:/dev/ttyACM1" //USB Serial Device (COM4), USB JTAG/serial debug unit
+    "--privileged",
+    "--device=/dev/ttyACM0:/dev/ttyACM0", //USB-Enhanced-SERIAL CH343 (COM3)
+    "--device=/dev/ttyACM1:/dev/ttyACM1" //USB Serial Device (COM4), USB JTAG/serial debug unit
   ],
   "initializeCommand": "bash .devcontainer/initialize-command.sh -w '${localWorkspaceFolder}'",
   "postCreateCommand": "bash .devcontainer/post-create.sh -w '${localWorkspaceFolder}'",

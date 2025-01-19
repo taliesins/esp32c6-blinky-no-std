@@ -16,49 +16,25 @@ use static_cell::StaticCell;
 
 /// Periodically print something.
 #[embassy_executor::task]
-async fn high_prio(mut led: esp_hal::gpio::Output<'static>) {
-    println!("Starting high_prio()");
+async fn blink_led_task(mut led: esp_hal::gpio::Output<'static>) {
+    println!("High priority - blink led starting");
     loop {
-        println!("High priority ticks");
-        led.toggle();
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(500)).await;
-        led.toggle();
-        embassy_time::Timer::after(embassy_time::Duration::from_millis(1_000)).await;
-    }
-}
+        led.set_high();
+        embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
 
-/// Simulates some blocking (badly behaving) task.
-#[embassy_executor::task]
-async fn low_prio_blocking() {
-    println!("Starting low-priority task that isn't actually async");
-    loop {
-        println!("Doing some long and complicated calculation");
-        let start = embassy_time::Instant::now();
-        while start.elapsed() < embassy_time::Duration::from_secs(5) {}
-        println!("Calculation finished");
-        embassy_time::Timer::after(embassy_time::Duration::from_secs(5)).await;
-    }
-}
-
-/// A well-behaved, but starved async task.
-#[embassy_executor::task]
-async fn low_prio_async() {
-    println!("Starting low-priority task that will not be able to run while the blocking task is running");
-    let mut ticker = embassy_time::Ticker::every(embassy_time::Duration::from_secs(1));
-    loop {
-        println!("Low priority ticks");
-        ticker.next().await;
+        led.set_low();
+        embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
     }
 }
 
 #[embassy_executor::task]
-async fn low_ledc(
+async fn blink_rgb_led_task(
     mut rgb_led_adapter: esp_hal_smartled::SmartLedsAdapter<
         esp_hal::rmt::Channel<esp_hal::Blocking, 0>,
         25,
     >,
 ) {
-    println!("Starting low-priority task that will drive ledc");
+    println!("Low priority - blink rgb led starting");
 
     // We use one of the RMT channels to instantiate a `SmartLedsAdapter` which can
     // be used directly with all `smart_led` implementations
@@ -99,7 +75,7 @@ async fn main(low_priority_spawner: embassy_executor::Spawner) {
     //Fix log output in vscode
     println!("\x1b[20h");
 
-    log::info!("Main - Loading");
+    log::info!("Main - Starting");
 
     let peripherals = esp_hal::init(esp_hal::Config::default()); //doesn't work ;<
 
@@ -120,7 +96,7 @@ async fn main(low_priority_spawner: embassy_executor::Spawner) {
         esp_hal_smartled::SmartLedsAdapter::new(rmt.channel0, peripherals.GPIO8, rmt_buffer);
 
     // External LED
-    let led_pin = esp_hal::gpio::Output::new(peripherals.GPIO11, Level::High);
+    let led_pin = esp_hal::gpio::Output::new(peripherals.GPIO4, Level::Low);
 
     static EXECUTOR: StaticCell<InterruptExecutor<2>> = StaticCell::new();
     let interrupt_executor = InterruptExecutor::new(sw_ints.software_interrupt2);
@@ -128,14 +104,11 @@ async fn main(low_priority_spawner: embassy_executor::Spawner) {
 
     let high_priority_spawner = executor.start(Priority::Priority3);
 
-    log::info!("Main - Starting");
-
-    high_priority_spawner.must_spawn(high_prio(led_pin));
+    log::info!("Spawning high-priority tasks");
+    high_priority_spawner.must_spawn(blink_led_task(led_pin));
 
     println!("Spawning low-priority tasks");
-    low_priority_spawner.must_spawn(low_prio_async());
-    low_priority_spawner.must_spawn(low_prio_blocking());
-    low_priority_spawner.must_spawn(low_ledc(rgb_led_adapter));
+    low_priority_spawner.must_spawn(blink_rgb_led_task(rgb_led_adapter));
 
     loop {
         log::info!("Main Loop");

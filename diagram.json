@@ -53,13 +53,13 @@
       []
     ],
     [
-      "esp:11",
+      "esp:4",
       "resistor:2",
       "red",
       []
     ],
     [
-      "esp:GND.1",
+      "esp:GND.4",
       "led:C",
       "black",
       []
