@@ -78,6 +78,10 @@ embassy-futures = { version = "0.1.1", features = ["log"] }
 # embassy-sync = { version = "0.6.1" }
 static_cell = { version = "2.1.0" }
 
+smart-leds = "0.4.0"
+esp-hal-smartled = {version = "0.14.0", features = ["esp32c6"]}
+# palette = { version = "0.7.3", default-features = false, features = ["libm"] }
+
 [features]
 default = ["rt"]
 rt = ["riscv-rt"]

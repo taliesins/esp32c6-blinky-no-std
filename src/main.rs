@@ -4,18 +4,19 @@
 
 use esp_backtrace as _;
 use esp_hal::{
-    gpio::{Level, Output},
+    gpio::Level,
     interrupt::{software::SoftwareInterruptControl, Priority},
     prelude::*,
     timer::{timg::TimerGroup, AnyTimer},
 };
 use esp_hal_embassy::InterruptExecutor;
 use esp_println::println;
+use smart_leds::SmartLedsWrite;
 use static_cell::StaticCell;
 
 /// Periodically print something.
 #[embassy_executor::task]
-async fn high_prio(mut led: Output<'static>) {
+async fn high_prio(mut led: esp_hal::gpio::Output<'static>) {
     println!("Starting high_prio()");
     loop {
         println!("High priority ticks");
@@ -50,6 +51,47 @@ async fn low_prio_async() {
     }
 }
 
+#[embassy_executor::task]
+async fn low_ledc(
+    mut rgb_led_adapter: esp_hal_smartled::SmartLedsAdapter<
+        esp_hal::rmt::Channel<esp_hal::Blocking, 0>,
+        25,
+    >,
+) {
+    println!("Starting low-priority task that will drive ledc");
+
+    // We use one of the RMT channels to instantiate a `SmartLedsAdapter` which can
+    // be used directly with all `smart_led` implementations
+
+    let mut color = smart_leds::hsv::Hsv {
+        hue: 0,
+        sat: 255,
+        val: 255,
+    };
+    let mut data;
+
+    let mut ticker = embassy_time::Ticker::every(embassy_time::Duration::from_millis(20));
+    loop {
+        // Iterate over the rainbow!
+        for hue in 0..=255 {
+            color.hue = hue;
+            // Convert from the HSV color space (where we can easily transition from one
+            // color to the other) to the RGB color space that we can then send to the LED
+            data = [smart_leds::hsv::hsv2rgb(color)];
+            // When sending to the LED, we do a gamma correction first (see smart_leds
+            // documentation for details) and then limit the brightness to 10 out of 255 so
+            // that the output it's not too bright.
+
+            esp_hal_smartled::SmartLedsAdapter::write(
+                &mut rgb_led_adapter,
+                smart_leds::brightness(smart_leds::gamma(data.iter().cloned()), 50),
+            )
+            .unwrap();
+            ticker.next().await;
+        }
+    }
+}
+
 #[main]
 async fn main(low_priority_spawner: embassy_executor::Spawner) {
     esp_println::logger::init_logger_from_env();
@@ -70,24 +112,15 @@ async fn main(low_priority_spawner: embassy_executor::Spawner) {
 
     esp_hal_embassy::init([timer0, timer1]);
 
-    let led = Output::new(peripherals.GPIO11, Level::High);
+    // Onboard RGB LED
+    let freq = 80.MHz();
+    let rmt = esp_hal::rmt::Rmt::new(peripherals.RMT, freq).unwrap();
+    let rmt_buffer: [u32; 25] = esp_hal_smartled::smartLedBuffer!(1);
+    let rgb_led_adapter =
+        esp_hal_smartled::SmartLedsAdapter::new(rmt.channel0, peripherals.GPIO8, rmt_buffer);
 
-    // // Setup Time Driver for running async sleeps
-    // let system = esp_hal::system::SystemControl::new(peripherals.SYSTEM);
-    // let clocks = esp_hal::clock::ClockControl::max(system.clock_control).freeze();
-    // let timer0 = timg0.timer0;
-
-    // Configure and Initialize LEDC Timer Driver
-    // let mut ledc = Ledc::new(peripherals.LEDC, &clocks);
-    // ledc.set_global_slow_clock(esp_hal::ledc::LSGlobalClkSource::APBClk);
-    // let mut lstimer0 = ledc.get_timer::<esp_hal::ledc::LowSpeed>(esp_hal::ledc::timer::Number::Timer0);
-    // lstimer0
-    //     .configure(esp_hal::ledc::timer::config::Config {
-    //         duty: esp_hal::ledc::timer::config::Duty::Duty5Bit,
-    //         clock_source: esp_hal::ledc::timer::LSClockSource::APBClk,
-    //         frequency: 24.kHz(),
-    //     })
-    //     .unwrap();
+    // External LED
+    let led_pin = esp_hal::gpio::Output::new(peripherals.GPIO11, Level::High);
 
     static EXECUTOR: StaticCell<InterruptExecutor<2>> = StaticCell::new();
     let interrupt_executor = InterruptExecutor::new(sw_ints.software_interrupt2);
@@ -97,11 +130,17 @@ async fn main(low_priority_spawner: embassy_executor::Spawner) {
 
     log::info!("Main - Starting");
 
-    high_priority_spawner.must_spawn(high_prio(led));
+    high_priority_spawner.must_spawn(high_prio(led_pin));
 
     println!("Spawning low-priority tasks");
     low_priority_spawner.must_spawn(low_prio_async());
     low_priority_spawner.must_spawn(low_prio_blocking());
+    low_priority_spawner.must_spawn(low_ledc(rgb_led_adapter));
 
-    //log::info!("Finished");
+    loop {
+        log::info!("Main Loop");
+        embassy_time::Timer::after(embassy_time::Duration::from_millis(1000)).await;
+    }
+
+    // log::info!("Finished");
 }
