@@ -16,8 +16,9 @@
     {
       "id": "resistor",
       "type": "wokwi-resistor",
-      "top": 125,
       "left": -115,
+      "top": -50,
+      "rotate": 90,
       "attrs": {
         "value": "220"
       }
@@ -25,9 +26,9 @@
     {
       "id": "led",
       "type": "wokwi-led",
-      "left": -150,
-      "top": 200,
-      "rotate": 180,
+      "left": 125,
+      "top": -50,
+      "rotate": 270,
       "attrs": {
         "color": "red"
       }
